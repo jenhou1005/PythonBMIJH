@@ -13,6 +13,8 @@ class BmiAppTests(unittest.TestCase):
         page = response.get_data(as_text=True)
         self.assertIn("了解自己的<br><em>健康狀況。</em>", page)
         self.assertIn("計算你的 BMI", page)
+        self.assertIn('id="bmi-gauge"', page)
+        self.assertIn("風險提醒", page)
 
     def test_calculation_and_advice(self):
         response = self.client.post("/", data={"height": "170", "weight": "65"})
@@ -20,6 +22,7 @@ class BmiAppTests(unittest.TestCase):
         self.assertIn("22.5", page)
         self.assertIn("健康體位", page)
         self.assertIn("維持均衡飲食", page)
+        self.assertIn("風險提醒", page)
 
     def test_taiwan_adult_thresholds(self):
         for bmi, category in [
@@ -40,7 +43,31 @@ class BmiAppTests(unittest.TestCase):
                 page = response.get_data(as_text=True)
                 self.assertEqual(response.status_code, 200)
                 self.assertIn('aria-invalid="true"', page)
-                self.assertNotIn("YOUR RESULT", page)
+                self.assertIn('id="bmi-value">—</span>', page)
+
+    def test_live_calculation_api(self):
+        response = self.client.post(
+            "/api/bmi", json={"height": "170", "weight": "65"}
+        )
+        self.assertEqual(response.status_code, 200)
+        result = response.get_json()
+        self.assertEqual(result["bmi"], "22.5")
+        self.assertEqual(result["label"], "健康體位")
+        self.assertIn("risk", result)
+        self.assertAlmostEqual(result["angle"], -15)
+
+    def test_live_calculation_api_rejects_invalid_values(self):
+        response = self.client.post(
+            "/api/bmi", json={"height": "0", "weight": "65"}
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("height", response.get_json()["errors"])
+
+        response = self.client.post(
+            "/api/bmi", json={"height": "1e-300", "weight": "65"}
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("height", response.get_json()["errors"])
 
     def test_input_is_escaped(self):
         response = self.client.post("/", data={"height": '<script>alert(1)</script>', "weight": "65"})

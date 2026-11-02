@@ -92,6 +92,40 @@ footer span { letter-spacing: .14em; }
   .result-panel { width: 100%; min-height: 0; }
   .information { grid-template-columns: 1fr; gap: 28px; }
 }
+
+.result-panel { min-height: 0; padding: 34px 36px; }
+.result-main { margin-top: 20px; }
+.result-number { font-size: clamp(62px, 7vw, 88px); }
+.gauge { position: relative; width: min(100%, 340px); margin: 0 auto -6px; }
+.gauge svg { display: block; width: 100%; overflow: visible; }
+.gauge-track, .gauge-segment { fill: none; stroke-width: 18; stroke-linecap: butt; }
+.gauge-track { stroke: #ffffffa8; }
+.gauge-low { stroke: #a2b8ca; }
+.gauge-healthy { stroke: #85b487; }
+.gauge-high { stroke: #e1c37d; }
+.gauge-obese { stroke: #ca977d; }
+.gauge-needle { stroke: #294d3a; stroke-width: 4; stroke-linecap: round; }
+.gauge-hub { fill: #294d3a; stroke: #f5faf1; stroke-width: 3; }
+.gauge-endpoints { position: absolute; right: 7%; bottom: 1px; left: 7%; display: flex; justify-content: space-between; color: #74877b; font-size: 11px; }
+.gauge-legend { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin: -1px 0 17px; }
+.gauge-legend span { display: flex; flex-direction: column; gap: 3px; color: #718276; font-size: 10px; text-align: center; }
+.gauge-legend strong { color: #40594a; font-size: 10px; font-weight: 600; white-space: nowrap; }
+.legend-low { border-top: 3px solid #a2b8ca; }
+.legend-healthy { border-top: 3px solid #85b487; }
+.legend-high { border-top: 3px solid #e1c37d; }
+.legend-obese { border-top: 3px solid #ca977d; }
+.result-status { min-height: 24px; color: #5c735e; font-size: 14px; }
+.result-status strong { color: #234f37; font-size: 17px; }
+.result-panel h2 { margin-top: 20px; }
+.risk-note { position: relative; z-index: 1; margin-top: 17px; padding: 12px 14px; border-left: 3px solid #bc9461; border-radius: 0 8px 8px 0; background: #ffffff70; }
+.risk-note > strong { color: #745a37; font-size: 12px; }
+.risk-note p { margin-top: 4px; color: #6f6657; font-size: 12px; line-height: 1.7; }
+.result-decoration { pointer-events: none; }
+
+@media (max-width: 800px) {
+  .result-panel { padding: 30px 24px; }
+  .result-number { font-size: clamp(62px, 15vw, 88px); }
+}
 @media (max-width: 440px) {
   .brand-en { display: none; }
   h1 { font-size: 43px; }

@@ -58,27 +58,39 @@
           </div>
 
           <div class="hero-side">
-            {% if result %}
-              <section class="result-panel {{ result.tone }}" aria-labelledby="result-title" aria-live="polite">
-                <span class="panel-kicker">YOUR RESULT / 計算結果</span>
-                <div class="result-main">
-                  <span class="result-number">{{ result.bmi }}</span>
-                  <span class="result-unit">BMI</span>
-                </div>
-                <div class="result-divider"></div>
-                <span class="result-label">你的體位屬於 <strong>{{ result.label }}</strong></span>
-                <h2 id="result-title">給你的健康建議</h2>
-                <p>{{ result.advice }}</p>
-                <span class="result-decoration" aria-hidden="true">✳</span>
-              </section>
-            {% else %}
-              <div class="illustration" aria-hidden="true">
-                <span class="illustration-ring ring-one"></span>
-                <span class="illustration-ring ring-two"></span>
-                <span class="illustration-center">身體的每一步<br>都值得好好照顧<span>✳</span></span>
+            <section class="result-panel {{ result.tone if result else '' }}" aria-labelledby="result-title" aria-live="polite">
+              <span class="panel-kicker">YOUR RESULT / 計算結果</span>
+              <div class="result-main">
+                <span class="result-number" id="bmi-value">{{ result.bmi if result else "—" }}</span>
+                <span class="result-unit">BMI</span>
               </div>
-              <div class="side-caption"><span class="caption-line"></span> SMALL STEPS, BETTER DAYS.</div>
-            {% endif %}
+              <div class="gauge" role="img" aria-label="BMI 儀表，輸入身高與體重後顯示目前位置" id="bmi-gauge">
+                <svg viewBox="0 0 300 180" aria-hidden="true">
+                  <path class="gauge-track" d="M 30 150 A 120 120 0 0 1 270 150" pathLength="100" />
+                  <path class="gauge-segment gauge-low" d="M 30 150 A 120 120 0 0 1 270 150" pathLength="100" stroke-dasharray="28.333 100" />
+                  <path class="gauge-segment gauge-healthy" d="M 30 150 A 120 120 0 0 1 270 150" pathLength="100" stroke-dasharray="18.334 100" stroke-dashoffset="-28.333" />
+                  <path class="gauge-segment gauge-high" d="M 30 150 A 120 120 0 0 1 270 150" pathLength="100" stroke-dasharray="10 100" stroke-dashoffset="-46.667" />
+                  <path class="gauge-segment gauge-obese" d="M 30 150 A 120 120 0 0 1 270 150" pathLength="100" stroke-dasharray="43.333 100" stroke-dashoffset="-56.667" />
+                  <line class="gauge-needle" id="gauge-needle" x1="150" y1="150" x2="150" y2="47" transform="rotate({{ result.angle if result else -90 }}, 150, 150)" {% if not result %}hidden{% endif %} />
+                  <circle class="gauge-hub" cx="150" cy="150" r="8" />
+                </svg>
+                <div class="gauge-endpoints" aria-hidden="true"><span>10</span><span>40+</span></div>
+              </div>
+              <div class="gauge-legend" aria-label="BMI 區間">
+                <span class="legend-low">過輕<strong>&lt;18.5</strong></span>
+                <span class="legend-healthy">正常<strong>18.5–24</strong></span>
+                <span class="legend-high">過重<strong>24–27</strong></span>
+                <span class="legend-obese">肥胖<strong>≥27</strong></span>
+              </div>
+              <p class="result-status" id="result-status">{% if result %}你的體位屬於 <strong>{{ result.label }}</strong>{% else %}輸入身高與體重，即時查看 BMI 位置{% endif %}</p>
+              <h2 id="result-title">給你的健康建議</h2>
+              <p id="result-advice">{% if result %}{{ result.advice }}{% else %}完成輸入後，這裡會提供適合你目前體位的建議。{% endif %}</p>
+              <div class="risk-note" id="risk-note" {% if not result %}hidden{% endif %}>
+                <strong>風險提醒</strong>
+                <p id="result-risk">{% if result %}{{ result.risk }}{% endif %}</p>
+              </div>
+              <span class="result-decoration" aria-hidden="true">✳</span>
+            </section>
           </div>
         </section>
 
@@ -100,5 +112,6 @@
       </main>
       <footer>© 好好生活 <span>TAKE CARE, EVERY DAY.</span></footer>
     </div>
+    <script src="{{ url_for('static', filename='app.js') }}" defer></script>
   </body>
 </html>

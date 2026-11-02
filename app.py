@@ -1,6 +1,6 @@
 import math
 
-from flask import Flask, render_template, request
+from flask import Flask, jsonify, render_template, request
 
 app = Flask(__name__)
 
@@ -11,23 +11,27 @@ def bmi_guidance(bmi):
             "label": "體重過輕",
             "tone": "low",
             "advice": "留意是否攝取足夠且均衡的營養，規律進食並搭配適度肌力活動；若體重持續下降，建議諮詢醫師或營養師。",
+            "risk": "BMI 偏低可能與營養不足或肌肉量偏少有關；BMI 不能單獨判斷健康狀況。",
         }
     if bmi < 24:
         return {
             "label": "健康體位",
             "tone": "healthy",
             "advice": "維持均衡飲食與規律運動，並持續留意睡眠及生活習慣，幫助保持健康體位。",
+            "risk": "落在參考範圍不代表沒有其他健康風險，仍應留意身體狀況並定期健康檢查。",
         }
     if bmi < 27:
         return {
             "label": "體重過重",
             "tone": "high",
             "advice": "可從減少含糖飲料、增加蔬菜與日常活動量開始，循序建立適合自己的健康習慣。",
+            "risk": "BMI 偏高可能與代謝健康風險有關；可一併留意腰圍、血壓及其他健康指標。",
         }
     return {
         "label": "肥胖",
         "tone": "high",
         "advice": "建議與醫師或營養師討論適合自己的飲食及運動計畫，並留意血壓、血糖等健康指標。",
+        "risk": "BMI 偏高可能增加代謝相關健康風險；建議由醫療專業人員綜合評估，不需只依單一數值判斷。",
     }
 
 
@@ -37,6 +41,26 @@ def parse_positive_number(value):
     except (TypeError, ValueError):
         return None
     return number if math.isfinite(number) and number > 0 else None
+
+
+def calculate_bmi_result(height, weight):
+    height_meters = height / 100
+    height_squared = height_meters * height_meters
+    if not math.isfinite(height_squared) or height_squared == 0:
+        return None, "height"
+
+    bmi = weight / height_squared
+    if not math.isfinite(bmi) or bmi == 0:
+        return None, "weight"
+
+    displayed_bmi = round(bmi, 1)
+    position = min(40, max(10, displayed_bmi))
+    angle = ((position - 10) / 30 * 180) - 90
+    return {
+        "bmi": f"{displayed_bmi:.1f}",
+        "angle": angle,
+        **bmi_guidance(displayed_bmi),
+    }, None
 
 
 @app.route("/", methods=["GET", "POST"])
@@ -58,17 +82,9 @@ def index():
             errors["weight"] = "請輸入大於 0 的有效體重（公斤）。"
 
         if not errors:
-            height_meters = height / 100
-            height_squared = height_meters * height_meters
-            if not math.isfinite(height_squared) or height_squared == 0:
-                errors["height"] = "無法使用這組數值計算 BMI，請檢查身高與體重。"
-            else:
-                bmi = weight / height_squared
-                if not math.isfinite(bmi) or bmi == 0:
-                    errors["weight"] = "無法使用這組數值計算 BMI，請檢查身高與體重。"
-                else:
-                    displayed_bmi = round(bmi, 1)
-                    result = {"bmi": f"{displayed_bmi:.1f}", **bmi_guidance(displayed_bmi)}
+            result, invalid_field = calculate_bmi_result(height, weight)
+            if invalid_field:
+                errors[invalid_field] = "無法使用這組數值計算 BMI，請檢查身高與體重。"
 
     return render_template(
         "index.html",
@@ -77,6 +93,30 @@ def index():
         errors=errors,
         result=result,
     )
+
+
+@app.route("/api/bmi", methods=["POST"])
+def calculate_bmi():
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict):
+        return jsonify(error="請提供身高與體重資料。"), 400
+
+    height = parse_positive_number(data.get("height"))
+    weight = parse_positive_number(data.get("weight"))
+    errors = {}
+    if height is None:
+        errors["height"] = "請輸入大於 0 的有效身高（公分）。"
+    if weight is None:
+        errors["weight"] = "請輸入大於 0 的有效體重（公斤）。"
+    if errors:
+        return jsonify(errors=errors), 400
+
+    result, invalid_field = calculate_bmi_result(height, weight)
+    if invalid_field:
+        return jsonify(errors={
+            invalid_field: "無法使用這組數值計算 BMI，請檢查身高與體重。"
+        }), 400
+    return jsonify(result)
 
 
 if __name__ == "__main__":
